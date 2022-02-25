@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use rusqlite::*;
 
+use crate::args::Args;
+
 const SCHEMA: &str = unsafe { std::str::from_utf8_unchecked(include_bytes!("schema.sql")) };
 
 const DB_NAME: &str = "data.db";
@@ -11,8 +13,10 @@ pub fn conn(datadir: &PathBuf) -> Result<Connection> {
     Connection::open(db)
 }
 
-pub fn init(datadir: &PathBuf) -> Result<()> {
-    let conn = conn(datadir)?;
+pub fn init(args: &Args) -> Result<()> {
+    std::fs::create_dir_all(&args.datadir).unwrap();
+
+    let conn = conn(&args.datadir)?;
 
     let stmts = SCHEMA.split(";").map(str::trim).filter(|s| !s.is_empty());
 

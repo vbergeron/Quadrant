@@ -32,5 +32,5 @@ CREATE TABLE `address_msg` (
     `block`   INTEGER REFERENCES `block`(`height`),
     `tx`      INTEGER REFERENCES `tx`(`idx`),
     `msg`     INTEGER REFERENCES `msg`(`idx`),
-    PRIMARY KEY (`address`,`block`,`tx`,`msg`)
+    `id`      ROWID
 );
