@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap;
 use clap::Parser;
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 #[clap(version)]
 pub struct Args {
     #[clap(long)]

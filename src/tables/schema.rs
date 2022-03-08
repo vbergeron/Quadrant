@@ -1,6 +1,5 @@
-use std::path::PathBuf;
-
 use rusqlite::*;
+use std::path::PathBuf;
 
 use crate::args::Args;
 
