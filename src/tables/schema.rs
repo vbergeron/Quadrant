@@ -3,9 +3,9 @@ use std::path::PathBuf;
 
 use crate::args::Args;
 
-const SCHEMA: &str = unsafe { std::str::from_utf8_unchecked(include_bytes!("schema.sql")) };
+pub const SCHEMA: &str = unsafe { std::str::from_utf8_unchecked(include_bytes!("schema.sql")) };
 
-const DB_NAME: &str = "data.db";
+pub const DB_NAME: &str = "data.db";
 
 pub fn conn(datadir: &PathBuf) -> Result<Connection> {
     let db = datadir.join(DB_NAME);

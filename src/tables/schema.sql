@@ -27,6 +27,16 @@ CREATE TABLE `msg` (
     PRIMARY KEY (`block`,`tx`, `idx`)
 );
 
+CREATE TABLE `msg_transfer` (
+    `block`    INTEGER REFERENCES `block`(`height`),
+    `tx`       INTEGER REFERENCES `tx`(`idx`),
+    `idx`      INTEGER,
+    `sender`   TEXT,
+    `receiver` TEXT,
+    `value`    INTEGER
+    PRIMARY KEY (`block`,`tx`, `idx`)
+);
+
 CREATE TABLE `address_msg` (
     `address` TEXT,
     `block`   INTEGER REFERENCES `block`(`height`),

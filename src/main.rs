@@ -1,7 +1,7 @@
 use clap::Parser;
-use std::sync::Arc;
 use env_logger;
 use log;
+use std::sync::Arc;
 
 pub mod api;
 pub mod args;
@@ -30,7 +30,11 @@ async fn main() {
     }
 
     let indexer_args = args.clone();
-    let indexer = tokio::spawn(async move { indexer::index_history(&indexer_args).await });
+    let indexer = if args.index {
+        tokio::spawn(async move { indexer::index_history(&indexer_args).await })
+    } else {
+        tokio::spawn(async move {})
+    };
 
     let api_args = args.clone();
     let api = tokio::spawn(async move { api::init(&api_args).await });

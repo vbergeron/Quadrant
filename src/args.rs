@@ -23,4 +23,7 @@ pub struct Args {
 
     #[clap(long, default_value_t = 0xFFFFFFFF)]
     pub to_block: u32,
+
+    #[clap(long)]
+    pub index: bool,
 }

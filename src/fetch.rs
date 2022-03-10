@@ -19,6 +19,35 @@ fn tx_hash(tx: &Transaction) -> String {
     hex::encode_upper(digest.finalize())
 }
 
+const MULTI: &'static str = "MULTI";
+
+fn msg_transfers(index: u32, msg: &Any) -> cosmrs::Result<Vec<model::Transfer>> {
+    match msg.type_url.as_str() {
+        "/cosmos.bank.v1beta1.MsgSend" => {
+            let parsed = cosmrs::bank::MsgSend::from_any(msg)?;
+            Ok(vec![
+                model::Transfer { index, sender: parsed.from_address, receiver: parsed.to_address, amount: 372}
+            ])
+        }
+        // TODO pr to cosmrs
+        "/cosmos.bank.v1beta1.MsgMultiSend" => {
+            let parsed = cosmos::bank::v1beta1::MsgMultiSend::decode(&msg.value[..])?;
+            let mut addresses = Vec::<String>::new();
+            for i in parsed.inputs {
+                addresses.push(i.address);
+            }
+            for o in parsed.outputs {
+                addresses.push(o.address);
+            }
+
+            Ok(addresses)
+        }
+        _ => {
+            Ok(vec![])
+        }
+    }
+}
+
 fn msg_addresses(msg: &Any) -> cosmrs::Result<Vec<String>> {
     match msg.type_url.as_str() {
         "/cosmos.bank.v1beta1.MsgSend" => {
