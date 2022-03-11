@@ -36,16 +36,21 @@ fn insert_block(conn: &mut rusqlite::Connection, block: &model::Block) -> rusqli
     txn.commit()
 }
 
-async fn index_block(conn: &mut rusqlite::Connection, client: &HttpClient, height: u64) {
+async fn index_history_block(conn: &mut rusqlite::Connection, client: &HttpClient, height: u64) {
     let res = client.block(height as u32).await.unwrap();
     let block = fetch::block_to_model(&res).unwrap();
     insert_block(conn, &block).unwrap();
 }
 
-fn index_history_lower_bound(conn: &mut rusqlite::Connection, args: &Args) -> rusqlite::Result<u64> {
-    let top = tables::block::top(&mut conn)
+fn index_history_lower_bound(
+    conn: &mut rusqlite::Connection,
+    args: &Args,
+) -> rusqlite::Result<u64> {
+    let mut txn = conn.transaction()?;
+    let top = tables::block::top(&mut txn)
         .map(|it| std::cmp::max(it.height + 1, args.from_block as u64))
         .unwrap_or(args.from_block as u64);
+    txn.commit()?;
     Ok(top)
 }
 
@@ -69,7 +74,7 @@ pub async fn index_history(args: &Args) {
         log::info!("Considering range : {} -> {}", lb, ub);
 
         for i in lb..(ub + 1) {
-            index_block(&mut conn, client, i).await;
+            index_history_block(&mut conn, client, i).await;
 
             if i % 1000 == 0 {
                 log::info!("Reached block : {}", i)
@@ -81,11 +86,28 @@ pub async fn index_history(args: &Args) {
     }
 }
 
-fn index_transfers_lower_bound(conn: &mut rusqlite::Connection, args: &Args) -> rusqlite::Result<u64> {
+fn index_transfers_lower_bound(
+    conn: &mut rusqlite::Connection,
+    args: &Args,
+) -> rusqlite::Result<u64> {
     todo!();
 }
-fn index_transfers_upper_bound(conn: &mut rusqlite::Connection, args: &Args) -> rusqlite::Result<u64> {
+fn index_transfers_upper_bound(
+    conn: &mut rusqlite::Connection,
+    args: &Args,
+) -> rusqlite::Result<u64> {
     todo!();
+}
+
+fn index_transfers_block(conn: &mut rusqlite::Connection, height: u64) {
+    let mut txn = conn.transaction().unwrap();
+    let msgs = tables::msg::by_block(&mut txn, height).unwrap();
+    for msg in msgs {
+        let transfers = fetch::msg_transfers(msg).unwrap();
+        for transfer in transfers {
+            todo!();
+        }
+    }
 }
 
 pub async fn index_transfers(args: &Args) {
@@ -98,7 +120,7 @@ pub async fn index_transfers(args: &Args) {
         log::info!("Considering range : {} -> {}", lb, ub);
 
         for i in lb..(ub + 1) {
-            //index_block(&mut conn, client, i).await;
+            index_transfers_block(&mut conn, i);
 
             if i % 1000 == 0 {
                 log::info!("Reached block : {}", i)

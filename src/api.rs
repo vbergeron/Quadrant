@@ -41,11 +41,11 @@ struct BlockView {
     time: String,
     proposer: String,
     tx_count: usize,
-    tx_hashes: Vec<String>
+    tx_hashes: Vec<String>,
 }
 
 impl BlockView {
-    fn from(block:BlockRow, txs: Vec<TxRow>) -> BlockView {
+    fn from(block: BlockRow, txs: Vec<TxRow>) -> BlockView {
         BlockView {
             height: block.height,
             hash: block.hash,

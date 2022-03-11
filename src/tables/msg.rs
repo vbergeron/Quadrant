@@ -46,3 +46,14 @@ where
         .execute(params![row.block, row.tx, row.idx, row.tag, row.data])
         .map(fp::as_unit)
 }
+
+const BY_BLOCK: &str = "SELECT (block, tx, idx, tag, data) FROM msg WHERE block = ?";
+pub fn by_block<T>(conn: &mut T, block: u64) -> Result<Vec<MsgRow>>
+where
+    T: core::ops::Deref<Target = Connection>,
+{
+    conn.prepare_cached(BY_BLOCK)?
+        .query_map(params![block], |row| MsgRow::try_from(row))?
+        .into_iter()
+        .collect()
+}

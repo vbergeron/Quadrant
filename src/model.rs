@@ -22,7 +22,6 @@ pub struct Msg {
     pub tag: String,
     pub data: Vec<u8>,
     pub addresses: Vec<String>,
-    pub transfers: Vec<Transfer>
 }
 
 #[derive(Debug)]
@@ -30,5 +29,5 @@ pub struct Transfer {
     pub index: u32,
     pub sender: String,
     pub receiver: String,
-    pub amount: u32,
+    pub amount: u64,
 }

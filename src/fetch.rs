@@ -1,4 +1,5 @@
 use crate::model;
+use crate::tables::msg::MsgRow;
 use chrono::{DateTime, Utc};
 use cosmrs::proto::*;
 use cosmrs::tx::Msg;
@@ -21,30 +22,55 @@ fn tx_hash(tx: &Transaction) -> String {
 
 const MULTI: &'static str = "MULTI";
 
-fn msg_transfers(index: u32, msg: &Any) -> cosmrs::Result<Vec<model::Transfer>> {
-    match msg.type_url.as_str() {
+fn amount_to_u64(coins: Vec<cosmrs::Coin>) -> u64 {
+    coins[0].amount.to_string().parse().unwrap()
+}
+
+fn amount_to_u64_proto(coins: Vec<cosmos::base::v1beta1::Coin>) -> u64 {
+    coins[0].amount.to_string().parse().unwrap()
+}
+
+pub fn msg_transfers(row: MsgRow) -> cosmrs::Result<Vec<model::Transfer>> {
+    let any = Any {
+        type_url: row.tag.clone(),
+        value: row.data,
+    };
+
+    match row.tag.as_str() {
         "/cosmos.bank.v1beta1.MsgSend" => {
-            let parsed = cosmrs::bank::MsgSend::from_any(msg)?;
-            Ok(vec![
-                model::Transfer { index, sender: parsed.from_address, receiver: parsed.to_address, amount: 372}
-            ])
+            let parsed = cosmrs::bank::MsgSend::from_any(&any)?;
+            Ok(vec![model::Transfer {
+                index: row.idx,
+                sender: parsed.from_address.to_string(),
+                receiver: parsed.to_address.to_string(),
+                amount: amount_to_u64(parsed.amount),
+            }])
         }
-        // TODO pr to cosmrs
         "/cosmos.bank.v1beta1.MsgMultiSend" => {
-            let parsed = cosmos::bank::v1beta1::MsgMultiSend::decode(&msg.value[..])?;
-            let mut addresses = Vec::<String>::new();
+            let parsed = cosmos::bank::v1beta1::MsgMultiSend::decode(&any.value[..])?;
+            let mut transfers = Vec::<model::Transfer>::new();
+
             for i in parsed.inputs {
-                addresses.push(i.address);
-            }
-            for o in parsed.outputs {
-                addresses.push(o.address);
+                transfers.push(model::Transfer {
+                    index: row.idx,
+                    sender: i.address,
+                    receiver: MULTI.to_string(),
+                    amount: amount_to_u64_proto(i.coins),
+                })
             }
 
-            Ok(addresses)
+            for o in parsed.outputs {
+                transfers.push(model::Transfer {
+                    index: row.idx,
+                    sender: MULTI.to_string(),
+                    receiver: o.address,
+                    amount: amount_to_u64_proto(o.coins),
+                })
+            }
+
+            Ok(transfers)
         }
-        _ => {
-            Ok(vec![])
-        }
+        _ => Ok(vec![]),
     }
 }
 
